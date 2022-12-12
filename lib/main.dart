@@ -8,11 +8,10 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Pomodoro',
       home: MyHomePage(),
     );
   }
@@ -26,8 +25,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Timer? _timer;
-  int _start = 0;
+  int duration = 1200;
   int styleIndex = 0;
 
   List<ScreenStyle> styles = [
@@ -36,30 +34,29 @@ class _MyHomePageState extends State<MyHomePage> {
     ScreenStyle("sea", "background_3.jpg", Color(0xFF226DEF))
   ];
 
-  CountDownController controller = CountDownController();
+  final CountDownController _countDownController = CountDownController();
 
   @override
   void initState() {
     super.initState();
+    //provede se při spuštění appky - jde o to aby tam nebyly ty 00:00:00
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.start();
-      controller.pause();
+      _countDownController.start();
+      _countDownController.pause();
     });
   }
 
   @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
+    double height = size.height;
+    double width = size.width;
+
     return Scaffold(
       body: Stack(
         children: <Widget>[
           Container(
-            height: MediaQuery.of(context).size.height,
+            height: height,
             decoration: BoxDecoration(
               image: DecorationImage(
                 fit: BoxFit.fitHeight,
@@ -70,84 +67,112 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           Positioned(
-              bottom: 60,
-              left: 100,
-              right: 100,
-              child: RaisedButton(
-                color: styles[styleIndex].buttonColor,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                onPressed: () {
-                  controller.start();
-                },
-                child: Text(
-                  "start",
-                  style: TextStyle(fontSize: 28.0, color: Colors.white),
-                ),
-              )),
+            bottom: height * 0.9,
+            right: width * 0.05,
+            child: InkWell(
+              onTap: () {},
+              child: Icon(
+                Icons.volume_down_sharp,
+                color: Colors.black,
+                size: width * 0.1,
+              ),
+            ),
+          ),
           Positioned(
-            bottom: 445,
-            left: 100,
-            right: 100,
+            bottom: height * 0.58,
+            left: width * 0.25,
+            right: width * 0.25,
             child: CircularCountDownTimer(
-              controller: controller,
-              strokeWidth: 10.0,
+              controller: _countDownController,
+              strokeWidth: width * 0.04,
               isReverse: true,
               autoStart: false,
-              duration: 1200,
+              duration: duration,
               ringColor: Colors.white.withOpacity(0.2),
               fillColor: styles[styleIndex].buttonColor,
-              width: 200,
-              height: 200,
+              width: width * 0.25,
+              height: height * 0.25,
               textStyle: TextStyle(
                   color: Colors.white.withOpacity(0.8),
-                  fontSize: 45,
+                  fontSize: width * 0.1,
                   fontWeight: FontWeight.bold),
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    if (styleIndex == 0) {
-                      styleIndex = styles.length - 1;
-                    } else {
-                      styleIndex--;
-                    }
-                  });
-                },
-                child: Icon(
-                  Icons.arrow_left_rounded,
-                  color: styles[styleIndex].buttonColor,
-                  size: 95.0,
+          Positioned(
+            bottom: height * 0.61,
+            left: width * 0.25,
+            right: width * 0.25,
+            child: InkWell(
+              onTap: () {
+                duration = duration + 300;
+                _countDownController.restart(duration: duration);
+                _countDownController.pause();
+              },
+              child: Icon(
+                Icons.add,
+                color: Colors.black,
+                size: width * 0.1,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: height * 0.1,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      if (styleIndex == 0) {
+                        styleIndex = styles.length - 1;
+                      } else {
+                        styleIndex--;
+                      }
+                    });
+                  },
+                  child: Icon(
+                    Icons.arrow_left_rounded,
+                    color: styles[styleIndex].buttonColor,
+                    size: width * 0.3,
+                  ),
                 ),
-              ),
-              SizedBox(width: 20, height: 120),
-              Text(
-                styles[styleIndex].title,
-                style: TextStyle(fontSize: 30.0, color: Colors.white),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(width: 20),
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    if (styleIndex == styles.length - 1) {
-                      styleIndex = 0;
-                      return;
-                    }
-                    styleIndex++;
-                  });
-                },
-                child: Icon(
-                  Icons.arrow_right_rounded,
+                PlayButton(
+                  controller: _countDownController,
+                  width: width * 0.25,
                   color: styles[styleIndex].buttonColor,
-                  size: 95.0,
+                  key: UniqueKey(),
                 ),
-              ),
-            ],
+                RestartButton(
+                  onTap: () {
+                    _countDownController.restart(duration: 1200);
+                    _countDownController.pause();
+                    duration = 1200;
+                    setState(() {});
+                  },
+                  height: height * 0.1,
+                  width: width * 0.25,
+                  color: styles[styleIndex].buttonColor,
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      if (styleIndex == styles.length - 1) {
+                        styleIndex = 0;
+                        return;
+                      }
+                      styleIndex++;
+                    });
+                  },
+                  child: Icon(
+                    Icons.arrow_right_rounded,
+                    color: styles[styleIndex].buttonColor,
+                    size: width * 0.3,
+                  ),
+                )
+              ],
+            ),
           ),
         ],
       ),
@@ -160,4 +185,71 @@ class ScreenStyle {
   final String backgroundImage;
   final Color buttonColor;
   ScreenStyle(this.title, this.backgroundImage, this.buttonColor);
+}
+
+class PlayButton extends StatefulWidget {
+  final CountDownController controller;
+  final Color color;
+  final double width;
+  const PlayButton(
+      {required this.controller,
+      required this.color,
+      required this.width,
+      Key? key})
+      : super(key: key);
+
+  @override
+  _PlayButtonState createState() => _PlayButtonState();
+}
+
+class _PlayButtonState extends State<PlayButton> {
+  bool isRunning = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+        onTap: isRunning
+            ? () {
+                widget.controller.pause();
+                setState(() {
+                  isRunning = false;
+                });
+              }
+            : () {
+                widget.controller.resume();
+                setState(() {
+                  isRunning = true;
+                });
+              },
+        child: Icon(
+          isRunning ? Icons.pause_circle_filled : Icons.play_circle_fill,
+          size: widget.width * 0.8,
+          color: widget.color,
+        ));
+  }
+}
+
+class RestartButton extends StatelessWidget {
+  final Function() onTap;
+  final Color color;
+  final double height;
+  final double width;
+  const RestartButton(
+      {required this.onTap,
+      required this.color,
+      required this.height,
+      required this.width,
+      Key? key})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+        onTap: onTap,
+        child: Icon(
+          Icons.stop_circle,
+          size: width * 0.8,
+          color: color,
+        ));
+  }
 }
